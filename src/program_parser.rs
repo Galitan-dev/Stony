@@ -24,7 +24,7 @@ mod tests {
     use super::program;
 
     #[test]
-    fn test_parse_program() {
+    fn test_parse_simple_program() {
         let test_program = CompleteStr("1 + 2");
         let result = program(test_program);
         assert_eq!(result, Ok((CompleteStr(""), Token::Program { 
@@ -33,6 +33,29 @@ mod tests {
                     left: Box::new(Token::Integer { value: 1 }), 
                     op: Box::new(Token::AdditionOperator), 
                     right: Box::new(Token::Integer { value: 2 }),
+                }
+           ]
+        })));
+    }
+
+    #[test]
+    fn test_parse_complex_program() {
+        let test_program = CompleteStr("(5 + (2 * 6)) / 4");
+        let result = program(test_program);
+        assert_eq!(result, Ok((CompleteStr(""), Token::Program { 
+            expressions: vec![
+                Token::Expression { 
+                    left: Box::new(Token::Expression { 
+                        left: Box::new(Token::Integer { value: 5 }), 
+                        op: Box::new(Token::AdditionOperator), 
+                        right: Box::new(Token::Expression { 
+                            left: Box::new(Token::Integer { value: 2 }), 
+                            op: Box::new(Token::MultiplicationOperator), 
+                            right: Box::new(Token::Integer { value: 6 }),
+                        }) 
+                    }), 
+                    op: Box::new(Token::DivisionOperator), 
+                    right: Box::new(Token::Integer { value: 4 }),
                 }
            ]
         })));

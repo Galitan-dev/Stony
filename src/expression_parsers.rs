@@ -5,12 +5,25 @@ use crate::{
     operator_parsers::operator
 };
 
+named!(parenthised_expresion<CompleteStr, Token>,
+    ws!(
+        do_parse!(
+            tag!("(") >>
+            expr: expression >>
+            tag!(")") >>
+            (
+                expr
+            )
+        )
+    )
+);
+
 named!(pub expression<CompleteStr, Token>,
     ws!(
         do_parse!(
-            left: ws!(operand) >>
+            left: ws!(alt!(operand | parenthised_expresion)) >>
             op: ws!(operator) >>
-            right: ws!(operand) >>
+            right: ws!(alt!(operand | parenthised_expresion)) >>
             (
                 Token::Expression { 
                     left: Box::new(left), 
