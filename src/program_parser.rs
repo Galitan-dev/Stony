@@ -4,7 +4,7 @@ use crate::{
     tokens::Token
 };
 
-named!(program<CompleteStr, Token>,
+named!(pub program<CompleteStr, Token>,
     ws!(
         do_parse!(
             expressions: many1!(expression) >>
