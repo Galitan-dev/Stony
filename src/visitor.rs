@@ -36,10 +36,38 @@ impl Visitor for Compiler {
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
+                self.used_registers.push(result_register);
             }
-            &Token::SubtractionOperator => {}
-            &Token::MultiplicationOperator => {}
-            &Token::DivisionOperator => {}
+            &Token::SubtractionOperator => {
+                let result_register = self.free_registers.pop().unwrap();
+                let right_register = self.used_registers.pop().unwrap();
+                let left_register = self.used_registers.pop().unwrap();
+                let line = format!("SUB ${left_register} ${right_register} ${result_register}");
+                self.assembly.push(line);
+                self.free_registers.push(left_register);
+                self.free_registers.push(right_register);
+                self.used_registers.push(result_register);
+            }
+            &Token::MultiplicationOperator => {
+                let result_register = self.free_registers.pop().unwrap();
+                let right_register = self.used_registers.pop().unwrap();
+                let left_register = self.used_registers.pop().unwrap();
+                let line = format!("MUL ${left_register} ${right_register} ${result_register}");
+                self.assembly.push(line);
+                self.free_registers.push(left_register);
+                self.free_registers.push(right_register);
+                self.used_registers.push(result_register);
+            }
+            &Token::DivisionOperator => {
+                let result_register = self.free_registers.pop().unwrap();
+                let right_register = self.used_registers.pop().unwrap();
+                let left_register = self.used_registers.pop().unwrap();
+                let line = format!("DIV ${left_register} ${right_register} ${result_register}");
+                self.assembly.push(line);
+                self.free_registers.push(left_register);
+                self.free_registers.push(right_register);
+                self.used_registers.push(result_register);
+            }
             &Token::Integer { value } => {
                 let next_register = self.free_registers.pop().unwrap();
                 let line = format!("LOAD ${next_register} #{value}");
@@ -70,23 +98,40 @@ mod tests {
     use crate::program_parser::program;
     use nom::types::CompleteStr;
 
-    fn generate_test_program() -> Token {
-        let source = CompleteStr("1+2");
-        let (_, tree) = program(source).unwrap();
-        tree
+    fn test_program(source: CompleteStr) -> String {
+        let (_, test_program) = program(source).unwrap();
+        let mut compiler = Compiler::new();
+        compiler.visit_token(&test_program);
+        compiler.assembly.join("\n")
     }
 
     #[test]
-    fn test_visit_addition_token() {
-        let mut compiler = Compiler::new();
-        let test_program = generate_test_program();
-        compiler.visit_token(&test_program);
-        let assembly = compiler.assembly.join("\n");
+    fn test_visit_simple_program() {
+        let assembly = test_program(CompleteStr("1+2"));
         assert_eq!(
             assembly,
             ["LOAD $0 #1", "LOAD $1 #2", "ADD $0 $1 $2"]
                 .join("\n")
                 .as_str()
         )
+    }
+
+    #[test]
+    fn test_visit_complex_program() {
+        let assembly = test_program(CompleteStr("(5 + (2 * 6)) / 4"));
+        assert_eq!(
+            assembly,
+            [
+                "LOAD $0 #5",
+                "LOAD $1 #2",
+                "LOAD $2 #6",
+                "MUL $1 $2 $3",
+                "ADD $0 $3 $2",
+                "LOAD $3 #4",
+                "DIV $2 $3 $0"
+            ]
+            .join("\n")
+            .as_str()
+        );
     }
 }
