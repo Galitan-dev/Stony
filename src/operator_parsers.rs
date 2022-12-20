@@ -1,5 +1,5 @@
-use nom::types::CompleteStr;
 use crate::tokens::Token;
+use nom::types::CompleteStr;
 
 named!(pub operator<CompleteStr, Token>,
     ws!(

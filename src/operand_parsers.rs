@@ -1,4 +1,4 @@
-use nom::{types::CompleteStr, digit};
+use nom::{digit, types::CompleteStr};
 
 use crate::tokens::Token;
 
@@ -44,8 +44,7 @@ mod test {
             let result = integer(CompleteStr(o));
             assert!(result.is_ok());
             let (_, token) = result.unwrap();
-            assert_eq!(token, Token::Integer{value: parsed_o});
+            assert_eq!(token, Token::Integer { value: parsed_o });
         }
     }
-
 }

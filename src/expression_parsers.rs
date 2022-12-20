@@ -1,9 +1,5 @@
+use crate::{operand_parsers::operand, operator_parsers::operator, tokens::Token};
 use nom::types::CompleteStr;
-use crate::{
-    tokens::Token,
-    operand_parsers::operand,
-    operator_parsers::operator
-};
 
 named!(parenthised_expresion<CompleteStr, Token>,
     ws!(
@@ -25,10 +21,10 @@ named!(pub expression<CompleteStr, Token>,
             op: ws!(operator) >>
             right: ws!(alt!(operand | parenthised_expresion)) >>
             (
-                Token::Expression { 
-                    left: Box::new(left), 
-                    op: Box::new(op), 
-                    right: Box::new(right), 
+                Token::Expression {
+                    left: Box::new(left),
+                    op: Box::new(op),
+                    right: Box::new(right),
                 }
             )
         )
