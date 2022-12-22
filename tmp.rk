@@ -1,9 +1,0 @@
-.data
-.code
-LOAD $0 #5
-LOAD $1 #2
-LOAD $2 #6
-MUL $1 $2 $3
-ADD $0 $3 $1
-LOAD $0 #4
-DIV $1 $0 $3

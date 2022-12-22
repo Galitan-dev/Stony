@@ -27,14 +27,12 @@ impl Compiler {
 
 impl Visitor for Compiler {
     fn visit_token(&mut self, node: &Token) {
-        println!("Visit {node:?} with {:?}", self.used_registers);
-
         match node {
             &Token::AdditionOperator => {
                 let result_register = self.free_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
                 let right_register = self.used_registers.pop().unwrap();
-                let line = format!("ADD ${right_register} ${left_register} ${result_register}",);
+                let line = format!("ADD ${right_register} ${left_register} ${result_register}");
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -44,7 +42,7 @@ impl Visitor for Compiler {
                 let result_register = self.free_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
                 let right_register = self.used_registers.pop().unwrap();
-                let line = format!("SUB ${right_register} ${left_register} ${result_register}",);
+                let line = format!("SUB ${right_register} ${left_register} ${result_register}");
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -54,7 +52,7 @@ impl Visitor for Compiler {
                 let result_register = self.free_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
                 let right_register = self.used_registers.pop().unwrap();
-                let line = format!("MUL ${right_register} ${left_register} ${result_register}",);
+                let line = format!("MUL ${right_register} ${left_register} ${result_register}");
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -64,10 +62,11 @@ impl Visitor for Compiler {
                 let result_register = self.free_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
                 let right_register = self.used_registers.pop().unwrap();
-                let line = format!("DIV ${right_register} ${left_register} ${result_register}",);
+                let line = format!("DIV ${right_register} ${left_register} ${result_register}");
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
+                self.used_registers.push(result_register);
             }
             &Token::Expression {
                 ref left,
@@ -149,6 +148,27 @@ mod tests {
                 "ADD $0 $3 $1",
                 "LOAD $0 #4",
                 "DIV $1 $0 $3"
+            ]
+            .join("\n")
+            .as_str()
+        );
+    }
+
+    #[test]
+    fn test_visit_program_with_priorities() {
+        let assembly = test_program("2 + 3 * 5 - 6 / 2");
+        assert_eq!(
+            assembly,
+            [
+                "LOAD $0 #2",
+                "LOAD $1 #3",
+                "LOAD $2 #5",
+                "MUL $1 $2 $3",
+                "ADD $0 $3 $1",
+                "LOAD $0 #6",
+                "LOAD $3 #2",
+                "DIV $0 $3 $2",
+                "SUB $1 $2 $0"
             ]
             .join("\n")
             .as_str()
