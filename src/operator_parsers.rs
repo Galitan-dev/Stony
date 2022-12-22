@@ -1,57 +1,27 @@
 use crate::tokens::Token;
-use nom::types::CompleteStr;
+use nom::{branch::alt, bytes::complete::tag, combinator::map, error::VerboseError, IResult};
 
-named!(pub operator<CompleteStr, Token>,
-    ws!(
-        alt!(
-            addition_operator |
-            subtraction_operator |
-            multiplication_operator |
-            division_operator
-        )
-    )
-);
+pub fn operator<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    alt((
+        addition_operator,
+        subtraction_operator,
+        multiplication_operator,
+        division_operator,
+    ))(i)
+}
 
-named!(addition_operator<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            tag!("+") >>
-            (
-                Token::AdditionOperator
-            )
-        )
-    )
-);
+fn addition_operator<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    map(tag("+"), |_| Token::AdditionOperator)(i)
+}
 
-named!(subtraction_operator<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            tag!("-") >>
-            (
-                Token::SubtractionOperator
-            )
-        )
-    )
-);
+fn subtraction_operator<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    map(tag("-"), |_| Token::SubtractionOperator)(i)
+}
 
-named!(multiplication_operator<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            tag!("*") >>
-            (
-                Token::MultiplicationOperator
-            )
-        )
-    )
-);
+fn multiplication_operator<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    map(tag("*"), |_| Token::MultiplicationOperator)(i)
+}
 
-named!(division_operator<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            tag!("/") >>
-            (
-                Token::DivisionOperator
-            )
-        )
-    )
-);
+fn division_operator<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    map(tag("/"), |_| Token::DivisionOperator)(i)
+}

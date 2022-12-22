@@ -1,32 +1,24 @@
-use crate::{operand_parsers::operand, operator_parsers::operator, tokens::Token};
-use nom::types::CompleteStr;
+use crate::{operand_parsers::operand, operator_parsers::operator, tokens::Token, utils::ws};
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    combinator::map,
+    error::VerboseError,
+    sequence::{delimited, tuple},
+    IResult,
+};
 
-named!(parenthised_expresion<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            tag!("(") >>
-            expr: expression >>
-            tag!(")") >>
-            (
-                expr
-            )
-        )
-    )
-);
+pub fn expression<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    map(
+        tuple((ws(inner_expression), ws(operator), ws(inner_expression))),
+        |(left, op, right)| Token::Expression {
+            left: Box::new(left),
+            op: Box::new(op),
+            right: Box::new(right),
+        },
+    )(i)
+}
 
-named!(pub expression<CompleteStr, Token>,
-    ws!(
-        do_parse!(
-            left: ws!(alt!(operand | parenthised_expresion)) >>
-            op: ws!(operator) >>
-            right: ws!(alt!(operand | parenthised_expresion)) >>
-            (
-                Token::Expression {
-                    left: Box::new(left),
-                    op: Box::new(op),
-                    right: Box::new(right),
-                }
-            )
-        )
-    )
-);
+pub fn inner_expression<'a>(i: &'a str) -> IResult<&'a str, Token, VerboseError<&'a str>> {
+    alt((operand, delimited(tag("("), expression, tag(")"))))(i)
+}

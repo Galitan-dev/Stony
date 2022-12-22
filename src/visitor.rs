@@ -96,9 +96,8 @@ impl Visitor for Compiler {
 mod tests {
     use super::*;
     use crate::program_parser::program;
-    use nom::types::CompleteStr;
 
-    fn test_program(source: CompleteStr) -> String {
+    fn test_program(source: &str) -> String {
         let (_, test_program) = program(source).unwrap();
         let mut compiler = Compiler::new();
         compiler.visit_token(&test_program);
@@ -107,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_visit_simple_program() {
-        let assembly = test_program(CompleteStr("1+2"));
+        let assembly = test_program("1+2");
         assert_eq!(
             assembly,
             ["LOAD $0 #1", "LOAD $1 #2", "ADD $0 $1 $2"]
@@ -118,7 +117,7 @@ mod tests {
 
     #[test]
     fn test_visit_complex_program() {
-        let assembly = test_program(CompleteStr("(5 + (2 * 6)) / 4"));
+        let assembly = test_program("(5 + (2 * 6)) / 4");
         assert_eq!(
             assembly,
             [
