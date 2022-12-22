@@ -27,12 +27,14 @@ impl Compiler {
 
 impl Visitor for Compiler {
     fn visit_token(&mut self, node: &Token) {
+        println!("Visit {node:?} with {:?}", self.used_registers);
+
         match node {
             &Token::AdditionOperator => {
                 let result_register = self.free_registers.pop().unwrap();
-                let right_register = self.used_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
-                let line = format!("ADD ${left_register} ${right_register} ${result_register}");
+                let right_register = self.used_registers.pop().unwrap();
+                let line = format!("ADD ${right_register} ${left_register} ${result_register}",);
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -40,9 +42,9 @@ impl Visitor for Compiler {
             }
             &Token::SubtractionOperator => {
                 let result_register = self.free_registers.pop().unwrap();
-                let right_register = self.used_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
-                let line = format!("SUB ${left_register} ${right_register} ${result_register}");
+                let right_register = self.used_registers.pop().unwrap();
+                let line = format!("SUB ${right_register} ${left_register} ${result_register}",);
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -50,9 +52,9 @@ impl Visitor for Compiler {
             }
             &Token::MultiplicationOperator => {
                 let result_register = self.free_registers.pop().unwrap();
-                let right_register = self.used_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
-                let line = format!("MUL ${left_register} ${right_register} ${result_register}");
+                let right_register = self.used_registers.pop().unwrap();
+                let line = format!("MUL ${right_register} ${left_register} ${result_register}",);
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
@@ -60,13 +62,25 @@ impl Visitor for Compiler {
             }
             &Token::DivisionOperator => {
                 let result_register = self.free_registers.pop().unwrap();
-                let right_register = self.used_registers.pop().unwrap();
                 let left_register = self.used_registers.pop().unwrap();
-                let line = format!("DIV ${left_register} ${right_register} ${result_register}");
+                let right_register = self.used_registers.pop().unwrap();
+                let line = format!("DIV ${right_register} ${left_register} ${result_register}",);
                 self.assembly.push(line);
                 self.free_registers.push(left_register);
                 self.free_registers.push(right_register);
-                self.used_registers.push(result_register);
+            }
+            &Token::Expression {
+                ref left,
+                ref right,
+            } => {
+                self.visit_token(left);
+                for expression in right {
+                    self.visit_token(&expression.1);
+                    self.visit_token(&expression.0);
+                }
+            }
+            &Token::Factor { ref value } => {
+                self.visit_token(value);
             }
             &Token::Integer { value } => {
                 let next_register = self.free_registers.pop().unwrap();
@@ -74,14 +88,21 @@ impl Visitor for Compiler {
                 self.used_registers.push(next_register);
                 self.assembly.push(line);
             }
-            &Token::Expression {
+            &Token::Float { value } => {
+                let next_register = self.free_registers.pop().unwrap();
+                let line = format!("LOAD ${next_register} #{value}");
+                self.used_registers.push(next_register);
+                self.assembly.push(line);
+            }
+            &Token::Term {
                 ref left,
-                ref op,
                 ref right,
             } => {
                 self.visit_token(left);
-                self.visit_token(right);
-                self.visit_token(op);
+                for expression in right {
+                    self.visit_token(&expression.1);
+                    self.visit_token(&expression.0);
+                }
             }
             &Token::Program { ref expressions } => {
                 for expression in expressions {
@@ -125,9 +146,9 @@ mod tests {
                 "LOAD $1 #2",
                 "LOAD $2 #6",
                 "MUL $1 $2 $3",
-                "ADD $0 $3 $2",
-                "LOAD $3 #4",
-                "DIV $2 $3 $0"
+                "ADD $0 $3 $1",
+                "LOAD $0 #4",
+                "DIV $1 $0 $3"
             ]
             .join("\n")
             .as_str()
